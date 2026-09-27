@@ -55,9 +55,19 @@ Sprites are `struct Sprite { w, h, const uint8_t* px }`. The easiest way to make
 
 `Pad` has `ax`/`ay` (analog, -1 to 1, with the D-pad overriding the stick) and three button bitmasks: `held`, `pressed` and `released`. Use `in.down(BTN_A)` and `in.hit(BTN_B | BTN_X)`. `input::Repeat` gives menu-style auto-repeat.
 
+## Difficulty
+
+Every game offers Easy, Normal and Hard, and the engine does most of the work:
+
+- On the title screen, call `if (arcade::titleInput(in)) hiscore = arcade::loadHi(DEFAULT);`. It handles UP/DOWN for difficulty and LEFT/RIGHT for volume, and returns true when the difficulty changes, because each difficulty keeps its own hi-score.
+- Draw the selector with `arcade::drawDifficulty(y)`.
+- Scale your hazards with `arcade::speed()`: 0.7 on Easy, 1.0 on Normal and 1.25 on Hard. Stretch intervals such as fire cooldowns with `arcade::frames(n)`. Slower is easier. Leave the player's own movement alone so the controls feel the same at every level.
+
+The choice is saved per game, and the pause menu shows it.
+
 ## Saving
 
-`arcade::loadHi(default)` and `arcade::saveHi(v)` store a hi-score. `arcade::prefs` is a `Preferences` namespace for anything else you want to keep.
+`arcade::loadHi(default)` and `arcade::saveHi(v)` store a hi-score for the current difficulty. `arcade::prefs` is a `Preferences` namespace for anything else you want to keep.
 
 ## Test on your PC
 

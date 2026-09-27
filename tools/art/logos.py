@@ -5,7 +5,8 @@ import os, sys
 here = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(here, "..", "..", "games", "NovaLance", "tools"))
 import make_assets as base
-from make_assets import PAL, YELLOW, ORANGE, RED, MAG, PURD, REDD, CYAN, ICE, TEAL, GRN, GRND, LIME, WHITE, PUR
+from make_assets import (PAL, YELLOW, ORANGE, RED, MAG, PURD, REDD, CYAN, ICE, TEAL, GRN, GRND, LIME, WHITE, PUR,
+                         PINK, PEACH, SAND, BROWN, INDIGO)
 
 base.FONT5.update({
     "B": ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
@@ -17,6 +18,12 @@ base.FONT5.update({
     "T": ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
     "M": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
     "D": ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+    "P": ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+    "H": ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+    "U": ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
+    "G": ["01111", "10000", "10000", "10111", "10001", "10001", "01111"],
+    "Y": ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
+    "Z": ["11111", "00001", "00010", "00100", "01000", "10000", "11111"],
 })
 
 def recolour(im, remap):
@@ -48,3 +55,13 @@ write(os.path.join(root, "BrickStorm", "logo.h"), "logo",
       recolour(base.logo("BRICK STORM", 3), {YELLOW: YELLOW, ORANGE: ORANGE, RED: RED}))
 write(os.path.join(root, "AlienTide", "logo.h"), "logo",
       recolour(base.logo("ALIEN TIDE", 4), {YELLOW: LIME, ORANGE: GRN, RED: GRND, REDD: PURD, MAG: TEAL}))
+write(os.path.join(root, "NeonSerpent", "logo.h"), "logo",
+      recolour(base.logo("NEON SERPENT", 4), {YELLOW: ICE, ORANGE: CYAN, RED: PINK, REDD: PUR}))
+write(os.path.join(root, "AstroDrift", "logo.h"), "logo",
+      recolour(base.logo("ASTRO DRIFT", 4), {YELLOW: PEACH, ORANGE: SAND, RED: ORANGE, MAG: BROWN, REDD: BROWN}))
+write(os.path.join(root, "HopRush", "logo.h"), "logo",
+      recolour(base.logo("HOP RUSH", 4), {YELLOW: LIME, ORANGE: YELLOW, RED: GRN, MAG: TEAL, REDD: GRND}))
+write(os.path.join(root, "VoltRally", "logo.h"), "logo",
+      recolour(base.logo("VOLT RALLY", 4), {ORANGE: ICE, RED: CYAN, MAG: TEAL, REDD: INDIGO}))
+write(os.path.join(root, "MazeMunch", "logo.h"), "logo",
+      recolour(base.logo("MAZE MUNCH", 4), {YELLOW: PINK, ORANGE: MAG, RED: PUR, MAG: PURD, REDD: PURD}))
