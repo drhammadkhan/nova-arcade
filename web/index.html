@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Arcade</title>
+<meta name="description" content="A retro game console for the ESP32-S3 2.8&quot; board: flash it from your browser, load games from the SD card, play with a Bluetooth controller.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script type="module" src="vendor/esp-web-tools/install-button.js"></script>
+<style>
+  :root {
+    --bg: #07061a;
+    --bg2: #120c33;
+    --panel: rgba(20, 16, 52, .78);
+    --line: #3a2d7a;
+    --text: #e9e6ff;
+    --muted: #a59fd0;
+    --cyan: #3ec6e0;
+    --pink: #ff4fd0;
+    --yellow: #ffd84a;
+    --orange: #ff8a3d;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; color: var(--text); background: var(--bg);
+    font: 16px/1.6 Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+    overflow-x: hidden;
+  }
+  /* synthwave backdrop: gradient sky + perspective grid */
+  .sky {
+    position: fixed; inset: 0; z-index: -2;
+    background: linear-gradient(180deg, #05041a 0%, #150d3e 45%, #3a1552 68%, #120828 69%, #0b0520 100%);
+  }
+  .grid {
+    position: fixed; left: -50%; right: -50%; bottom: -10vh; height: 45vh; z-index: -1;
+    background-image:
+      linear-gradient(rgba(255,79,208,.55) 2px, transparent 2px),
+      linear-gradient(90deg, rgba(255,79,208,.45) 2px, transparent 2px);
+    background-size: 60px 60px;
+    transform: perspective(300px) rotateX(62deg);
+    transform-origin: 50% 0;
+    animation: grid 2.4s linear infinite;
+    mask-image: linear-gradient(to bottom, transparent, #000 35%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 35%);
+  }
+  @keyframes grid { to { background-position: 0 60px, 0 0; } }
+  @media (prefers-reduced-motion: reduce) { .grid { animation: none; } html { scroll-behavior: auto; } }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; gap: 12px; }
+  .brand { font-family: "Press Start 2P", monospace; font-size: 14px; letter-spacing: 1px; color: var(--cyan); text-decoration: none; }
+  .brand span { color: var(--pink); }
+  nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 14px; }
+  nav a:hover { color: var(--text); }
+  @media (max-width: 640px) { nav { display: none; } }
+
+  .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; padding: 40px 0 70px; }
+  @media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 16px; } }
+  h1 {
+    font-family: "Press Start 2P", monospace; font-weight: 400; line-height: 1.25;
+    font-size: clamp(30px, 6vw, 52px); margin: 0 0 18px;
+    background: linear-gradient(180deg, #fff 0%, #b8f3ff 30%, #3ec6e0 55%, #ff4fd0 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(3px 3px 0 #4a1d6b);
+  }
+  .lead { font-size: 18px; color: var(--muted); max-width: 520px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; align-items: center; }
+  .btn, esp-web-install-button button {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    font: 600 15px Inter, sans-serif; padding: 13px 20px; border-radius: 10px; text-decoration: none;
+    border: 2px solid var(--cyan); color: #051018; background: var(--cyan);
+    box-shadow: 0 0 24px rgba(62,198,224,.45);
+  }
+  .btn.ghost { background: transparent; color: var(--text); border-color: var(--line); box-shadow: none; }
+  .btn:hover, esp-web-install-button button:hover { filter: brightness(1.1); }
+  .note { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  .screen {
+    border-radius: 18px; padding: 14px; background: linear-gradient(145deg, #1d1a3f, #0c0a24);
+    border: 2px solid #2e2766; box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(255,79,208,.15);
+  }
+  .screen img { display: block; width: 100%; image-rendering: pixelated; border-radius: 6px; aspect-ratio: 4/3; }
+
+  section { padding: 60px 0; }
+  h2 { font-family: "Press Start 2P", monospace; font-weight: 400; font-size: 20px; color: var(--yellow); margin: 0 0 8px; line-height: 1.4; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; backdrop-filter: blur(6px); }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: s; }
+  @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+  .step h3 { margin: 0 0 8px; font-size: 17px; }
+  .step h3::before {
+    counter-increment: s; content: counter(s); display: inline-grid; place-items: center;
+    width: 30px; height: 30px; margin-right: 10px; border-radius: 8px; font-family: "Press Start 2P"; font-size: 12px;
+    background: var(--pink); color: #1a0520;
+  }
+  .step p { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+  .step .btn { font-size: 14px; padding: 10px 14px; }
+  code, kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; background: #221b52; padding: 1px 6px; border-radius: 5px; color: #d7d2ff; }
+
+  .games { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  @media (max-width: 760px) { .games { grid-template-columns: 1fr; } }
+  .game { display: grid; grid-template-columns: 180px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 420px) { .game { grid-template-columns: 1fr; } }
+  .game img { width: 100%; image-rendering: pixelated; border-radius: 8px; border: 1px solid var(--line); aspect-ratio: 4/3; }
+  .game h3 { font-family: "Press Start 2P", monospace; font-weight: 400; font-size: 13px; margin: 2px 0 10px; color: var(--cyan); line-height: 1.5; }
+  .game p { margin: 0 0 10px; font-size: 14.5px; color: var(--muted); }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: #241b58; color: #cfc8ff; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  td, th { text-align: left; padding: 8px 6px; border-bottom: 1px solid #2a2166; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  li { margin-bottom: 6px; }
+  details { border-bottom: 1px solid #2a2166; padding: 12px 0; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); margin: 8px 0 0; }
+  footer { padding: 40px 0 70px; color: var(--muted); font-size: 13px; text-align: center; }
+  a { color: var(--cyan); }
+  .unsupported { color: var(--orange); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="sky"></div><div class="grid"></div>
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#">NOVA<span>ARCADE</span></a>
+    <nav>
+      <a href="#install">Install</a>
+      <a href="#games">Games</a>
+      <a href="#hardware">Hardware</a>
+      <a href="#make">Make a game</a>
+      <a href="https://github.com/drhammadkhan/nova-arcade">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>NOVA<br>ARCADE</h1>
+      <p class="lead">A retro games console for the ESP32-S3 2.8&Prime; board. Flash it from your browser, drop games onto the SD card and play with a Bluetooth controller.</p>
+      <div class="cta">
+        <esp-web-install-button manifest="manifest.json">
+          <button slot="activate">&#9889; Install on my board</button>
+          <span slot="unsupported" class="unsupported">Your browser can't talk to USB devices. Open this page in Chrome or Edge on a computer.</span>
+          <span slot="not-allowed" class="unsupported">Browser flashing needs a secure (https) page.</span>
+        </esp-web-install-button>
+        <a class="btn ghost" href="firmware/nova-arcade-sd-card.zip" download>&#11015; SD card pack</a>
+      </div>
+      <p class="note">Version __VERSION__ &middot; Chrome or Edge on desktop &middot; USB-C data cable</p>
+    </div>
+    <div class="screen"><img src="img/launcher.png" alt="The Nova Arcade launcher showing game cards on a neon grid"></div>
+  </div>
+</div>
+
+<section id="install">
+  <div class="wrap">
+    <h2>Get playing in 3 steps</h2>
+    <p class="sub">About five minutes, no software to install.</p>
+    <div class="steps">
+      <div class="card step">
+        <h3>Flash the launcher</h3>
+        <p>Plug the board into your computer, press <b>Install on my board</b> above and pick the USB port. If it won't connect, hold <kbd>BOOT</kbd>, tap <kbd>RST</kbd>, release <kbd>BOOT</kbd> and try again.</p>
+      </div>
+      <div class="card step">
+        <h3>Load the SD card</h3>
+        <p>Download the SD card pack, unzip it and copy the <code>arcade</code> folder to the root of a FAT32 microSD card. Put the card in the board.</p>
+        <a class="btn ghost" href="firmware/nova-arcade-sd-card.zip" download>&#11015; nova-arcade-sd-card.zip</a>
+      </div>
+      <div class="card step">
+        <h3>Pair and play</h3>
+        <p>On a Stadia controller in Bluetooth mode, hold <kbd>Y</kbd> + <kbd>Stadia</kbd> for 2 seconds. Pick a game with the D-pad and press <kbd>A</kbd>. The first launch of each game takes a few seconds to install.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="games">
+  <div class="wrap">
+    <h2>The games</h2>
+    <p class="sub">Original art and music, in the spirit of the classics. Hi-scores are saved on the board.</p>
+    <div class="games">
+      <div class="card game">
+        <img src="img/novalance.png" alt="Nova Lance gameplay: a ship firing at enemies over a synthwave city" loading="lazy">
+        <div>
+          <h3>NOVA LANCE</h3>
+          <p>Side-scrolling shoot-'em-up over a synthwave city. Weapon upgrades, shields, bombs and a boss every stage.</p>
+          <div class="tags"><span class="tag">A fire</span><span class="tag">B bomb</span><span class="tag">Shoot-'em-up</span></div>
+        </div>
+      </div>
+      <div class="card game">
+        <img src="img/blockfall.png" alt="Blockfall gameplay: coloured blocks stacking in a well" loading="lazy">
+        <div>
+          <h3>BLOCKFALL</h3>
+          <p>Falling-blocks puzzler with hold, ghost piece, 3-piece preview and proper wall kicks. The music speeds up when the stack gets high.</p>
+          <div class="tags"><span class="tag">A/B rotate</span><span class="tag">&uarr; hard drop</span><span class="tag">Puzzle</span></div>
+        </div>
+      </div>
+      <div class="card game">
+        <img src="img/brickstorm.png" alt="Brick Storm gameplay: a diamond of coloured bricks above a paddle" loading="lazy">
+        <div>
+          <h3>BRICK STORM</h3>
+          <p>Brick-breaker with 8 hand-made stages, silver, gold and explosive bricks, and power-ups: wide, multi-ball, laser, slow and catch.</p>
+          <div class="tags"><span class="tag">Stick to steer</span><span class="tag">A launch</span><span class="tag">Arcade</span></div>
+        </div>
+      </div>
+      <div class="card game">
+        <img src="img/alientide.png" alt="Alien Tide gameplay: rows of aliens above shields and a cannon" loading="lazy">
+        <div>
+          <h3>ALIEN TIDE</h3>
+          <p>Hold back the marching waves. They speed up as they thin out, shields wear away, and a bonus saucer drifts past.</p>
+          <div class="tags"><span class="tag">A fire</span><span class="tag">Wave shooter</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="hardware">
+  <div class="wrap">
+    <h2>Hardware</h2>
+    <p class="sub">Built and tested on the LCDWIKI ES3N28P / ES3C28P board.</p>
+    <div class="two">
+      <div class="card">
+        <table>
+          <tr><th>Board</th><td>ESP32-S3, 16 MB flash, 8 MB PSRAM</td></tr>
+          <tr><th>Screen</th><td>2.8&Prime; ILI9341 IPS, 320&times;240</td></tr>
+          <tr><th>Sound</th><td>ES8311 codec + speaker</td></tr>
+          <tr><th>Storage</th><td>microSD (FAT32)</td></tr>
+          <tr><th>Controller</th><td>Bluetooth LE gamepad</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><b>Controllers that work</b> (the ESP32-S3 only has Bluetooth LE):</p>
+        <ul>
+          <li>Google Stadia controller, converted to Bluetooth mode</li>
+          <li>Xbox Wireless controller, firmware v5 or newer</li>
+          <li>Other BLE gamepads supported by Bluepad32</li>
+        </ul>
+        <p style="margin-bottom:0;color:var(--muted);font-size:14px">Classic-Bluetooth pads (PS4/PS5, Switch Pro, 8BitDo) won't pair with the S3.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="controls">
+  <div class="wrap">
+    <h2>Everywhere controls</h2>
+    <p class="sub">These work in every game.</p>
+    <div class="card">
+      <table>
+        <tr><th>START</th><td>Pause menu: resume, volume, quit to menu</td></tr>
+        <tr><th>SELECT + &uarr; / &darr;</th><td>Volume up / down (saved for all games)</td></tr>
+        <tr><th>SELECT + START</th><td>Back to the launcher</td></tr>
+        <tr><th>Reset button</th><td>Always returns to the launcher</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="make">
+  <div class="wrap">
+    <h2>Make your own game</h2>
+    <p class="sub">Every game is a normal Arduino sketch built on the shared <b>ArcadeCore</b> engine.</p>
+    <div class="two">
+      <div class="card">
+        <ul>
+          <li>Strip renderer with DMA, sprites, text and palette effects</li>
+          <li>Chiptune synth with songs and sound effects</li>
+          <li>Controller input, pause menu, volume and hi-score saving built in</li>
+          <li>A desktop simulator for testing without the board</li>
+        </ul>
+        <p style="margin-bottom:0"><a href="https://github.com/drhammadkhan/nova-arcade/blob/main/docs/MAKING_GAMES.md">Read the guide &rarr;</a></p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0">To add a game to your console, copy its files into <code>/arcade</code> on the SD card:</p>
+        <ul>
+          <li><code>MyGame.bin</code> the compiled sketch (required)</li>
+          <li><code>MyGame.png</code> a 160&times;120 thumbnail</li>
+          <li><code>MyGame.txt</code> title, description and save id, one per line</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="help">
+  <div class="wrap">
+    <h2>Troubleshooting</h2>
+    <div class="card">
+      <details><summary>The install button doesn't find my board</summary><p>Use a USB cable that carries data, not a charge-only one. Hold BOOT, tap RST, release BOOT, then try again. Close anything else using the serial port, such as the Arduino IDE's Serial Monitor.</p></details>
+      <details><summary>"Insert SD card" or "No games found"</summary><p>The card must be FAT32 and contain a folder called <code>arcade</code> at the top level with the .bin files inside. Press A on the board to scan again.</p></details>
+      <details><summary>The controller won't connect</summary><p>Only Bluetooth LE controllers work. A Stadia controller must first be switched to Bluetooth mode. Flashing the launcher clears old pairings, so pair again with Y + Stadia.</p></details>
+      <details><summary>Glitches or sparkles on the screen</summary><p>The display speed is set in <code>lib/ArcadeCore/src/arcade/Config.h</code> (<code>TFT_SPI_HZ</code>). 27 MHz is safe on the tested board.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Nova Arcade &middot; open source on <a href="https://github.com/drhammadkhan/nova-arcade">GitHub</a> &middot; uses <a href="https://github.com/ricardoquesada/bluepad32">Bluepad32</a>, <a href="https://github.com/lovyan03/LovyanGFX">LovyanGFX</a> and <a href="https://github.com/esphome/esp-web-tools">ESP Web Tools</a>
+</footer>
+</body>
+</html>

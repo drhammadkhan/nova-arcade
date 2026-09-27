@@ -1,0 +1,8 @@
+build/
+tools/sim/out/
+tools/sim/sim_*
+!tools/sim/sim_*.cpp
+!tools/sim/sim_driver.h
+__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,9 @@
+# Nova Arcade flash layout (16MB)
+# The launcher lives in "factory"; the selected game is installed into "ota_0".
+# Name,   Type, SubType, Offset,   Size
+nvs,      data, nvs,     0x9000,   0x5000
+otadata,  data, ota,     0xe000,   0x2000
+factory,  app,  factory, 0x10000,  0x200000
+ota_0,    app,  ota_0,   0x210000, 0x600000
+spiffs,   data, spiffs,  0x810000, 0x7E0000
+coredump, data, coredump,0xFF0000, 0x10000
