@@ -81,6 +81,8 @@ inline void exitToLauncher() {
   gfx::lcd.fillScreen(0);
   armReturnToLauncher();
   esp_restart();
+#elif defined(ARCADE_WEB)
+  arcadeWebExit();   // the browser player goes back to its game list
 #endif
 }
 

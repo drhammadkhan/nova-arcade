@@ -4,6 +4,8 @@ A retro games console for the ESP32-S3 2.8" board. A launcher loads games from t
 
 **Install it:** https://drhammadkhan.github.io/nova-arcade/ (Chrome or Edge on a computer)
 
+**Play it in a browser, no board needed:** https://drhammadkhan.github.io/nova-arcade/play/ (keyboard or any gamepad)
+
 ![Launcher](web/img/launcher.png)
 
 | | | |
@@ -51,6 +53,7 @@ Launcher/            the menu firmware (factory partition, custom partitions.csv
 games/<Game>/        one Arduino sketch per game, plus thumb.png and meta.txt for the SD card
 lib/ArcadeCore/      shared engine: renderer, synth, input, pause menu, saves
 tools/sim/           desktop simulator: run any game on your PC and save screenshots
+tools/web/           WebAssembly entry point for the browser player (web/play/)
 tools/art/           Python scripts that generate the pixel art
 web/                 the browser flasher (ESP Web Tools, vendored)
 scripts/             setup.sh (toolchain) and build.sh (everything)
