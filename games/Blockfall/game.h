@@ -322,7 +322,7 @@ static void updateFx() {
 static void updatePlay(const Pad& in) {
   if (in.hit(BTN_START)) { arcade::pause(); return; }
   // hold
-  if (in.hit(BTN_X | BTN_Y | BTN_L1 | BTN_R1) && !holdUsed) {
+  if (in.hit(BTN_Y | BTN_L1 | BTN_R1) && !holdUsed) {
     int t = cur.type;
     if (hold < 0) { hold = t; nextPiece(); }
     else { int h = hold; hold = t; spawn(h); }
@@ -330,11 +330,12 @@ static void updatePlay(const Pad& in) {
     audio::play(SFX_BLIP);
     return;
   }
-  if (in.hit(BTN_A)) rotate(+1);
+  // Up rotates too: a nudge on the stick must never slam the piece down
+  if (in.hit(BTN_A | BTN_UP)) rotate(+1);
   if (in.hit(BTN_B)) rotate(-1);
   if (repL.tick(in.down(BTN_LEFT), 10, 2) && tryMove(-1, 0)) { audio::play(SFX_MOVE); touchedGround(); }
   if (repR.tick(in.down(BTN_RIGHT), 10, 2) && tryMove(1, 0)) { audio::play(SFX_MOVE); touchedGround(); }
-  if (in.hit(BTN_UP)) {   // hard drop
+  if (in.hit(BTN_X | BTN_R2)) {   // hard drop
     int d = 0;
     int x0 = cur.x;
     while (tryMove(0, 1)) d++;
@@ -503,9 +504,9 @@ static void drawPanels() {
   drawPieceMini(queue[1], 268, 82, false);
   drawPieceMini(queue[2], 268, 114, false);
   box(226, 148, 84, 74, "KEYS");
-  text("\x1e DROP  \x1f SOFT", 268, 164, c565(150, 140, 200), 1, top_center, false);
-  text("A/B ROTATE", 268, 178, c565(150, 140, 200), 1, top_center, false);
-  text("X/Y HOLD", 268, 192, c565(150, 140, 200), 1, top_center, false);
+  text("X DROP \x1f SOFT", 268, 164, c565(150, 140, 200), 1, top_center, false);
+  text("A/B/\x1e ROTATE", 268, 178, c565(150, 140, 200), 1, top_center, false);
+  text("Y HOLD", 268, 192, c565(150, 140, 200), 1, top_center, false);
   text("START PAUSE", 268, 206, c565(150, 140, 200), 1, top_center, false);
 }
 
@@ -536,8 +537,8 @@ static void draw() {
     else text("PAIR CONTROLLER: HOLD Y + STADIA", SW / 2, 130, c565(255, 138, 61), 1, top_center);
     textf(SW / 2, 22, c565(255, 216, 74), 1, top_center, "HI-SCORE %07lu", (unsigned long)hiscore);
     arcade::drawDifficulty(152);
-    text("\x11\x10 MOVE  \x1e DROP  \x1f SOFT DROP", SW / 2, 176, c565(180, 194, 220), 1, top_center);
-    text("A/B ROTATE   X/Y HOLD   START PAUSE", SW / 2, 190, c565(180, 194, 220), 1, top_center);
+    text("\x11\x10 MOVE   X DROP   \x1f SOFT DROP", SW / 2, 176, c565(180, 194, 220), 1, top_center);
+    text("A/B/\x1e ROTATE   Y HOLD   START PAUSE", SW / 2, 190, c565(180, 194, 220), 1, top_center);
     text("SELECT+START: BACK TO MENU", SW / 2, 210, c565(115, 132, 168), 1, top_center);
     return;
   }
