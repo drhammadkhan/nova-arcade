@@ -76,6 +76,7 @@ static float padX = 160, padW = 40;
 static const int PAD_Y = 222;
 static int lives = 3, stage = 0, loopN = 0;
 static uint32_t score = 0, hiscore = 0;
+static const uint32_t HI_DEFAULT = 15000;
 static float ballSpeed = 3.0f;
 static int combo = 0;
 static int laserT = 0, slowT = 0, wideT = 0, catchT = 0;
@@ -137,7 +138,7 @@ static void resetBall() {
 static void startStage() {
   loadStage(stage);
   buildBackground(stage);
-  ballSpeed = 3.0f + 0.35f * loopN + 0.05f * (stage % 8);
+  ballSpeed = (3.0f + 0.35f * loopN + 0.05f * (stage % 8)) * arcade::speed();
   resetBall();
   state = ST_PLAY; stateT = 0;
 }
@@ -235,7 +236,7 @@ static void updateBall(Ball& b) {
       b.y = PAD_Y - 3;
       combo = 0;
       padFlash = 6;
-      ballSpeed = min(ballSpeed + 0.03f, 5.6f + 0.3f * loopN);
+      ballSpeed = min(ballSpeed + 0.03f * arcade::speed(), (5.6f + 0.3f * loopN) * arcade::speed());
       audio::play(SFX_BOUNCE, 12);
       if (catchT) { b.stuck = true; b.stuckOff = b.x - padX; }
     }
@@ -303,7 +304,7 @@ static void updatePlay(const Pad& in) {
   for (auto& b : balls) if (b.on) { updateBall(b); if (b.on) alive++; }
   for (auto& c : caps) {
     if (!c.on) continue;
-    c.y += 1.3f;
+    c.y += 1.3f * arcade::speed();
     if (c.y + 8 >= PAD_Y && c.y <= PAD_Y + 6 && c.x + 16 > padX - padW / 2 && c.x < padX + padW / 2) { c.on = false; applyCap(c.type); }
     else if (c.y > SH) c.on = false;
   }
@@ -344,8 +345,7 @@ static void step(const Pad& in) {
       dbx += dvx; dby += dvy;
       if (dbx < 10 || dbx > SW - 10) dvx = -dvx;
       if (dby < 110 || dby > 230) dvy = -dvy;
-      if (in.hit(BTN_LEFT)) arcade::changeVolume(-1);
-      if (in.hit(BTN_RIGHT)) arcade::changeVolume(+1);
+      if (arcade::titleInput(in)) hiscore = arcade::loadHi(HI_DEFAULT);
       if (in.hit(BTN_START | BTN_A)) { resetGame(); audio::play(SFX_START); audio::music(SONG_GAME); }
       break;
     case ST_PLAY: updatePlay(in); break;
@@ -451,6 +451,7 @@ static void draw() {
     if (input::pad.connected) { if (blink) text("PRESS START", SW / 2, 118, TFT_WHITE, 2, top_center); }
     else text("PAIR CONTROLLER: HOLD Y + STADIA", SW / 2, 120, c565(255, 138, 61), 1, top_center);
     textf(SW / 2, 18, c565(255, 216, 74), 1, top_center, "HI-SCORE %07lu", (unsigned long)hiscore);
+    arcade::drawDifficulty(140);
     text("STICK/D-PAD MOVE   A LAUNCH/FIRE", SW / 2, 160, c565(180, 194, 220), 1, top_center);
     // power-up legend
     static const char* names[NCAP] = {"WIDE", "MULTI", "LASER", "SLOW", "CATCH", "LIFE"};
@@ -512,7 +513,7 @@ void setup() {
   arcade::begin("brickstorm", &MUSIC);
   setPalette(LOGO_PAL565, 25);
   buildBackground(0);
-  hiscore = arcade::loadHi(15000);
+  hiscore = arcade::loadHi(HI_DEFAULT);
   audio::music(SONG_TITLE);
 }
 

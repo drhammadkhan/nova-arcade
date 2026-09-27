@@ -120,6 +120,7 @@ static int hold = -1;
 static bool holdUsed = false;
 static uint8_t bag[7], bagN = 0, queue[3];
 static uint32_t score = 0, hiscore = 0;
+static const uint32_t HI_DEFAULT = 10000;
 static int level = 1, lines = 0, combo = -1;
 static int gravT = 0, lockT = 0, lockResets = 0;
 static input::Repeat repL, repR;
@@ -199,7 +200,7 @@ static void resetGame() {
 
 static int gravityFrames() {
   static const uint8_t G[] = {48, 43, 38, 33, 28, 23, 18, 13, 9, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3, 2};
-  return level <= 20 ? G[level - 1] : 1;
+  return arcade::frames(level <= 20 ? G[level - 1] : 1);
 }
 
 static void addScore(uint32_t v) {
@@ -369,8 +370,7 @@ static void step(const Pad& in) {
         d.y += d.v;
         if (d.y > SH + 10) { d.y = -40 - (rnd() % 60); d.x = rnd() % (SW - 40); d.type = rnd() % 7; d.rot = rnd() % 4; }
       }
-      if (in.hit(BTN_LEFT)) arcade::changeVolume(-1);
-      if (in.hit(BTN_RIGHT)) arcade::changeVolume(+1);
+      if (arcade::titleInput(in)) hiscore = arcade::loadHi(HI_DEFAULT);
       if (in.hit(BTN_START | BTN_A)) { resetGame(); audio::play(SFX_START); audio::music(SONG_GAME); }
       break;
     case ST_PLAY: updatePlay(in); break;
@@ -535,6 +535,7 @@ static void draw() {
     if (input::pad.connected) { if (blink) text("PRESS START", SW / 2, 128, TFT_WHITE, 2, top_center); }
     else text("PAIR CONTROLLER: HOLD Y + STADIA", SW / 2, 130, c565(255, 138, 61), 1, top_center);
     textf(SW / 2, 22, c565(255, 216, 74), 1, top_center, "HI-SCORE %07lu", (unsigned long)hiscore);
+    arcade::drawDifficulty(152);
     text("\x11\x10 MOVE  \x1e DROP  \x1f SOFT DROP", SW / 2, 176, c565(180, 194, 220), 1, top_center);
     text("A/B ROTATE   X/Y HOLD   START PAUSE", SW / 2, 190, c565(180, 194, 220), 1, top_center);
     text("SELECT+START: BACK TO MENU", SW / 2, 210, c565(115, 132, 168), 1, top_center);
@@ -562,7 +563,7 @@ void setup() {
   setPalette(LOGO_PAL565, 25);
   buildTiles();
   buildBackground();
-  hiscore = arcade::loadHi(10000);
+  hiscore = arcade::loadHi(HI_DEFAULT);
   audio::music(SONG_TITLE);
 }
 

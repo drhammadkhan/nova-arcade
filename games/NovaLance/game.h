@@ -193,6 +193,7 @@ struct Player {
 enum State { ST_TITLE, ST_PLAY, ST_OVER };
 static State state = ST_TITLE;
 static uint32_t score = 0, hiscore = 0;
+static const uint32_t HI_DEFAULT = 20000;
 static int level = 1;
 static uint32_t levelFrames = 0;
 static int waveTimer = 120;
@@ -249,8 +250,8 @@ static void spawnEnemy(uint8_t type, float y, float param) {
   e->type = type; e->x = SW + 4; e->y = y; e->baseY = y; e->param = param;
   float lv = level - 1;
   switch (type) {
-    case E_DRONE: e->hp = 2; e->vx = -1.3f - lv * 0.12f; e->timer = 60 + rnd() % 120; break;
-    case E_DART: e->hp = 1; e->vx = -3.0f - lv * 0.2f; break;
+    case E_DRONE: e->hp = 2; e->vx = (-1.3f - lv * 0.12f) * arcade::speed(); e->timer = arcade::frames(60 + rnd() % 120); break;
+    case E_DART: e->hp = 1; e->vx = (-3.0f - lv * 0.2f) * arcade::speed(); break;
     case E_POD: e->hp = 9 + level * 2; e->vx = -1.6f; e->param = frange(236, 280); e->timer = 0; break;
     case E_BOSS:
       e->hp = 280 + level * 90; e->vx = -0.8f; e->x = SW + 10; e->y = 90; e->baseY = 90;
@@ -271,7 +272,7 @@ static void fireEnemyShot(float x, float y, float angle, float speed) {
   s->x = x - 3.5f; s->y = y - 3.5f; s->vx = cosf(angle) * speed; s->vy = sinf(angle) * speed;
 }
 static float aimAt(float x, float y) { return atan2f((pl.y + 8) - y, (pl.x + 16) - x); }
-static float bulletSpeed() { return 1.9f + (level - 1) * 0.2f; }
+static float bulletSpeed() { return (1.9f + (level - 1) * 0.2f) * arcade::speed(); }
 
 static void spawnWave() {
   int r = rnd() % 100;
@@ -435,7 +436,7 @@ static void updateEnemies() {
         e.y = e.baseY + 26 * sinf(e.t * 0.055f + e.param);
         if (level >= 2 && --e.timer <= 0 && e.x < SW - 20 && e.x > 60) {
           fireEnemyShot(cx, cy, aimAt(cx, cy), bulletSpeed());
-          e.timer = 150 + rnd() % 120;
+          e.timer = arcade::frames(150 + rnd() % 120);
         }
         break;
       case E_DART:
@@ -619,7 +620,7 @@ static void updateDirector() {
   if (bossActive || levelFrames > bossAt) return;
   if (--waveTimer <= 0) {
     spawnWave();
-    waveTimer = max(50, 125 - level * 12 - (int)(levelFrames / 500));
+    waveTimer = arcade::frames(max(50, 125 - level * 12 - (int)(levelFrames / 500)));
   }
 }
 
@@ -744,6 +745,7 @@ static void drawOverlays() {
       text("PAIR YOUR CONTROLLER", SW / 2, 146, TFT_WHITE, 1, top_center);
       text("STADIA: HOLD Y + STADIA FOR 2S", SW / 2, 158, blink ? c565(255, 138, 61) : c565(255, 216, 74), 1, top_center);
     }
+    arcade::drawDifficulty(170);
     text("A/R2 FIRE   B/L1 BOMB   START PAUSE", SW / 2, 186, c565(180, 194, 220), 1, top_center);
     text("SELECT+START: BACK TO MENU", SW / 2, 198, c565(115, 132, 168), 1, top_center);
     char buf[24];
@@ -790,8 +792,7 @@ static void step(const Pad& in) {
   switch (state) {
     case ST_TITLE:
       scrollBackground(0.6f);
-      if (in.hit(BTN_LEFT)) arcade::changeVolume(-1);
-      if (in.hit(BTN_RIGHT)) arcade::changeVolume(+1);
+      if (arcade::titleInput(in)) hiscore = arcade::loadHi(HI_DEFAULT);
       if (in.hit(BTN_START | BTN_A)) {
         resetGame();
         state = ST_PLAY;
@@ -822,7 +823,7 @@ void setup() {
   arcade::begin("novalance", &MUSIC);
   setPalette(PAL565, PAL_SIZE);
   buildBackground();
-  hiscore = arcade::loadHi(20000);
+  hiscore = arcade::loadHi(HI_DEFAULT);
   audio::music(SONG_TITLE);
 }
 

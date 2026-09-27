@@ -176,9 +176,14 @@ static void scanGames() {
   const char* names[][3] = {{"NOVA LANCE", "Side-scrolling synthwave shoot-'em-up", "out/nl_play.ppm"},
                             {"BLOCKFALL", "Stack falling blocks, clear lines", "out/bf_play.ppm"},
                             {"BRICK STORM", "Smash every brick with power-ups", "out/bs_stage4.ppm"},
-                            {"ALIEN TIDE", "Hold back the descending waves", "out/at_play.ppm"}};
-  ngames = 4;
-  for (int i = 0; i < 4; i++) {
+                            {"ALIEN TIDE", "Hold back the descending waves", "out/at_play.ppm"},
+                            {"NEON SERPENT", "Eat, grow longer, dodge the walls", "out/ns_level3.ppm"},
+                            {"ASTRO DRIFT", "Split space rocks, dodge the hunters", "out/ad_play.ppm"},
+                            {"HOP RUSH", "Cross the road, ride the river", "out/hr_play.ppm"},
+                            {"VOLT RALLY", "Paddle tennis against six rivals", "out/vr_play.ppm"},
+                            {"MAZE MUNCH", "Clear the maze, outrun the wisps", "out/mm_play.ppm"}};
+  ngames = sizeof(names) / sizeof(names[0]);
+  for (int i = 0; i < ngames; i++) {
     memset(&games[i], 0, sizeof(Game));
     strcpy(games[i].title, names[i][0]); strcpy(games[i].desc, names[i][1]);
     snprintf(games[i].id, 16, "g%d", i);

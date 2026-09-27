@@ -65,6 +65,7 @@ static Popup popups[4];
 static float px = 150;
 static int lives = 3, wave = 1;
 static uint32_t score = 0, hiscore = 0;
+static const uint32_t HI_DEFAULT = 5000;
 static bool extraGiven = false, newHi = false;
 enum State { ST_TITLE, ST_PLAY, ST_DEAD, ST_CLEAR, ST_OVER };
 static State state = ST_TITLE;
@@ -166,7 +167,7 @@ static void formationBounds(int& minC, int& maxC, int& maxR) {
 }
 
 static void updateFormation() {
-  int interval = max(1, 2 + nAlive * 30 / 50 - min(wave - 1, 4));
+  int interval = arcade::frames(max(1, 2 + nAlive * 30 / 50 - min(wave - 1, 4)));
   if (++stepT < interval) return;
   stepT = 0;
   int minC, maxC, maxR;
@@ -198,7 +199,7 @@ static void alienFire() {
   int active = 0;
   for (auto& s : eshots) if (s.on) active++;
   int maxShots = min(2 + wave, 6);
-  if (active >= maxShots || rnd() % max(8, 40 - wave * 4) != 0) return;
+  if (active >= maxShots || rnd() % arcade::frames(max(8, 40 - wave * 4)) != 0) return;
   int col;
   if (rnd() % 2) col = constrain((int)((px + 9 - fx) / CW), 0, ACOLS - 1);
   else col = rnd() % ACOLS;
@@ -209,7 +210,7 @@ static void alienFire() {
         for (auto& s : eshots)
           if (!s.on) {
             uint8_t kind = rnd() % 3 == 0 ? 1 : 0;
-            s = {true, fx + c * CW + 7, fy + r * CH_ + 12, kind ? 2.8f + wave * 0.1f : 1.6f + wave * 0.08f, kind};
+            s = {true, fx + c * CW + 7, fy + r * CH_ + 12, (kind ? 2.8f + wave * 0.1f : 1.6f + wave * 0.08f) * arcade::speed(), kind};
             return;
           }
         return;
@@ -273,7 +274,7 @@ static void updatePlay(const Pad& in) {
   }
   // saucer
   if (ufoDir) {
-    ufoX += ufoDir * 1.2f;
+    ufoX += ufoDir * 1.2f * arcade::speed();
     if ((frameNo % 16) == 0) audio::play(SFX_UFO);
     if (ufoX < -30 || ufoX > SW + 2) { ufoDir = 0; ufoT = 1500 + rnd() % 900; }
   } else if (--ufoT <= 0 && nAlive > 8) {
@@ -299,8 +300,7 @@ static void step(const Pad& in) {
   stateT++;
   switch (state) {
     case ST_TITLE:
-      if (in.hit(BTN_LEFT)) arcade::changeVolume(-1);
-      if (in.hit(BTN_RIGHT)) arcade::changeVolume(+1);
+      if (arcade::titleInput(in)) hiscore = arcade::loadHi(HI_DEFAULT);
       if (in.hit(BTN_START | BTN_A)) { resetGame(); audio::play(SFX_START); }
       break;
     case ST_PLAY: updatePlay(in); break;
@@ -390,8 +390,9 @@ static void draw() {
     if (input::pad.connected) { if (blink) text("PRESS START", SW / 2, 168, TFT_WHITE, 2, top_center); }
     else text("PAIR CONTROLLER: HOLD Y + STADIA", SW / 2, 170, c565(255, 138, 61), 1, top_center);
     textf(SW / 2, 12, c565(255, 216, 74), 1, top_center, "HI-SCORE %07lu", (unsigned long)hiscore);
-    text("\x11\x10 MOVE   A FIRE   START PAUSE", SW / 2, 194, c565(180, 194, 220), 1, top_center);
-    text("SELECT+START: BACK TO MENU", SW / 2, 206, c565(115, 132, 168), 1, top_center);
+    arcade::drawDifficulty(191);
+    text("\x11\x10 MOVE   A FIRE   START PAUSE", SW / 2, 208, c565(180, 194, 220), 1, top_center);
+    text("SELECT+START: BACK TO MENU", SW / 2, 222, c565(115, 132, 168), 1, top_center);
     return;
   }
   drawHud();
@@ -435,7 +436,7 @@ void setup() {
   setPalette(LOGO_PAL565, 25);
   buildBackground();
   buildShields();
-  hiscore = arcade::loadHi(5000);
+  hiscore = arcade::loadHi(HI_DEFAULT);
   audio::music(SONG_TITLE);
 }
 

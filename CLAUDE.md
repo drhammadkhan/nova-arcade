@@ -42,13 +42,14 @@ The ESP32-S3 has **Bluetooth LE only**. Pads that use Classic Bluetooth, includi
 - Partition table: `Launcher/partitions.csv`.
 - On start-up, every game calls `arcade::begin()`, which points the boot partition back at factory. Any reset therefore returns to the launcher, as does SELECT+START or the Stadia button.
 - The launcher skips reinstalling if the NVS key `arcade/slot` matches the game's path, size and mtime.
-- NVS namespaces: `arcade` holds shared settings (volume `vol`, `last`, `slot`). Each game has its own namespace for its hi-score (`hi`).
+- NVS namespaces: `arcade` holds shared settings (volume `vol`, `last`, `slot`). Each game has its own namespace for its difficulty (`diff`) and hi-scores (`hi`, `hiE`, `hiH`).
 - SD layout: `/arcade/<Game>.bin` (required), `<Game>.png` (160×120 thumbnail) and `<Game>.txt` (title, description and save id, one per line).
 
 ## ArcadeCore (`lib/ArcadeCore`): header-only, include once per sketch
 
 - `Render.h`: the frame is drawn as five 320×48 strips, double-buffered in internal DMA RAM and pushed with `pushImageDMA`. `draw()` runs once per strip, with `Y0` set to the strip's top row. Pixel colours in the buffer are **byte-swapped RGB565** (`rgbS()`, `pal[]`); LovyanGFX text and circle calls take normal RGB565 (`c565()`). Every helper clips to the current strip.
-- `System.h`: `arcade::begin(id, &music)` and `arcade::run(step, draw)` provide a fixed 60 Hz step, the pause menu (`arcade::pause()`), volume (SELECT+Up/Down), hi-scores (`loadHi`/`saveHi`) and `exitToLauncher()`.
+- `System.h`: `arcade::begin(id, &music)` and `arcade::run(step, draw)` provide a fixed 60 Hz step, the pause menu (`arcade::pause()`), volume (SELECT+Up/Down), difficulty, hi-scores (`loadHi`/`saveHi`) and `exitToLauncher()`.
+- Difficulty: Easy, Normal and Hard, saved per game (NVS key `diff`). Title screens call `arcade::titleInput(in)` (Up/Down picks the difficulty, Left/Right the volume) and `arcade::drawDifficulty(y)`. Games scale their hazards with `arcade::speed()` (0.7 / 1.0 / 1.25) and `arcade::frames(n)`; slower is easier, and the player's own speed isn't scaled. Hi-scores are kept per difficulty: `hi` (Normal, so older saves carry over), `hiE` and `hiH`.
 - `Audio.h`: the chiptune synth, running as a task on core 0 with 22.05 kHz I2S output. Songs are defined per game with the `Music`, `SongDef` and `Bar` structs. There's a shared `Sfx` enum. `audio::play(sfx, param)`.
 - `Input.h`: `Pad` with `ax`/`ay` plus `held`, `pressed` and `released` bitmasks (`BTN_*`), and `input::Repeat` for auto-repeat.
 
@@ -75,4 +76,5 @@ Use it to check visuals and game logic before flashing. Also rebuild the thumbna
 ## Status
 
 - Confirmed on hardware: Nova Lance as a standalone sketch (display at 27 MHz, sound, Stadia input, hardware volume) and the launcher flashed and booting.
-- Not yet verified on hardware: SD scanning, installing and booting games through the launcher, and the three newer games (Blockfall, Brick Storm, Alien Tide).
+- Not yet verified on hardware: SD scanning, installing and booting games through the launcher, the difficulty setting, and the games other than Nova Lance (Blockfall, Brick Storm, Alien Tide, Neon Serpent, Astro Drift, Hop Rush, Volt Rally, Maze Munch). All of them run in the desktop simulator.
+- GitHub Pages is live and deploys from `main` (and `v*` tags). Other branches only build.

@@ -6,10 +6,16 @@ A retro games console for the ESP32-S3 2.8" board. A launcher loads games from t
 
 ![Launcher](web/img/launcher.png)
 
-| | | | |
-|---|---|---|---|
-| ![Nova Lance](web/img/novalance.png) | ![Blockfall](web/img/blockfall.png) | ![Brick Storm](web/img/brickstorm.png) | ![Alien Tide](web/img/alientide.png) |
-| **Nova Lance**, a shoot-'em-up | **Blockfall**, falling blocks | **Brick Storm**, brick-breaker | **Alien Tide**, a wave shooter |
+| | | |
+|---|---|---|
+| ![Nova Lance](web/img/novalance.png) | ![Blockfall](web/img/blockfall.png) | ![Brick Storm](web/img/brickstorm.png) |
+| **Nova Lance**, a shoot-'em-up | **Blockfall**, falling blocks | **Brick Storm**, brick-breaker |
+| ![Alien Tide](web/img/alientide.png) | ![Neon Serpent](web/img/neonserpent.png) | ![Astro Drift](web/img/astrodrift.png) |
+| **Alien Tide**, a wave shooter | **Neon Serpent**, a snake game | **Astro Drift**, a space-rock shooter |
+| ![Hop Rush](web/img/hoprush.png) | ![Volt Rally](web/img/voltrally.png) | ![Maze Munch](web/img/mazemunch.png) |
+| **Hop Rush**, a road-and-river crossing | **Volt Rally**, paddle tennis | **Maze Munch**, a maze chase |
+
+Every game has three difficulty levels. Choose Easy, Normal or Hard on its title screen with up/down. Slower is easier, and each difficulty keeps its own hi-score.
 
 ## Quick start
 
@@ -21,6 +27,7 @@ A retro games console for the ESP32-S3 2.8" board. A launcher loads games from t
 |---|---|
 | START | Pause menu (resume / volume / quit) |
 | SELECT + ↑/↓ | Volume |
+| ↑/↓ on a title screen | Difficulty (Easy / Normal / Hard) |
 | SELECT + START | Back to the launcher |
 
 ## How it works
