@@ -1,4 +1,4 @@
-#include "../../games/Blockfall/Blockfall.ino"
+#include "../../games/Blockfall/game.h"
 #include "sim_driver.h"
 // simple placement AI for the simulation
 static double evalBoard() {

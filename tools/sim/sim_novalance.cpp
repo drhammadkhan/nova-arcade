@@ -1,4 +1,4 @@
-#include "../../games/NovaLance/NovaLance.ino"
+#include "../../games/NovaLance/game.h"
 #include "sim_driver.h"
 int main() {
   setup();

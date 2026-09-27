@@ -1,4 +1,4 @@
-#include "../../games/AlienTide/AlienTide.ino"
+#include "../../games/AlienTide/game.h"
 #include "sim_driver.h"
 int main() {
   setup();

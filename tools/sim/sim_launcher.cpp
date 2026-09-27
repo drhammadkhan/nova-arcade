@@ -1,4 +1,4 @@
-#include "../../Launcher/Launcher.ino"
+#include "../../Launcher/game.h"
 #include "sim_driver.h"
 int main() {
   setup();

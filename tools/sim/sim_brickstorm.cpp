@@ -1,4 +1,4 @@
-#include "../../games/BrickStorm/BrickStorm.ino"
+#include "../../games/BrickStorm/game.h"
 #include "sim_driver.h"
 int main() {
   setup();

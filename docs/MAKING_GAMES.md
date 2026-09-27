@@ -29,6 +29,8 @@ void setup() { arcade::begin("hello", &MUSIC); }  // "hello" = save namespace (m
 void loop()  { arcade::run(step, draw); }
 ```
 
+> **Tip:** once your game defines its own `struct`s, put the code in a `game.h` next to the sketch and make the `.ino` just `#include "game.h"`, as the bundled games do. The Arduino IDE auto-generates function prototypes at the top of `.ino` files, before your types exist, which breaks the build; it leaves headers alone.
+
 ## Drawing
 
 The 320×240 screen is drawn as five horizontal strips of 48 rows, so `draw()` runs five times per frame. Each time, `Y0` is the screen row the current strip starts at. The helpers in `arcade/Render.h` handle the clipping for you, so you can always use full-screen coordinates:
