@@ -88,4 +88,4 @@ Build with the same settings as the other games: board `esp32_bluepad32 → ESP3
 - `MyGame.png`: a 160×120 thumbnail
 - `MyGame.txt`: title, a one-line description and the save id, on three lines
 
-To include it in the official pack, add it to `games/` and to `GAMES` in `scripts/build.sh`.
+To include it in the official pack, add it to `games/` and to `GAMES` in `scripts/build.sh`. To also make it playable in the browser player, add it to `GAMES` in `scripts/build-web.sh` and `web/play/play.js`.

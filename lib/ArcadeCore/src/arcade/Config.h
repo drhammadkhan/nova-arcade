@@ -56,4 +56,6 @@
 
 // ---------------- Misc ----------------
 #define RUMBLE        1         // controller rumble
+#ifndef DEFAULT_VOLUME
 #define DEFAULT_VOLUME 3        // 0-10
+#endif

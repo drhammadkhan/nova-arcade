@@ -24,6 +24,7 @@ The ESP32-S3 has **Bluetooth LE only**. Pads that use Classic Bluetooth, includi
   - `nova-arcade-full.bin`: the flash image (bootloader, partition table, launcher), written at offset 0x0
   - `nova-arcade-sd-card.zip`: the `/arcade` folder for the SD card
   - `site/`: the web installer
+- `bash scripts/build-web.sh` builds the browser player into `build/site/play/` (see below).
 - CI (`.github/workflows/build.yml`) runs the same scripts on every push, deploys `build/site` to GitHub Pages (https://drhammadkhan.github.io/nova-arcade/), and makes a release on `v*` tags.
 
 ## Flashing and debugging on the Mac
@@ -72,6 +73,15 @@ g++ -std=gnu++17 -O1 -DARCADE_SIM -I. -I../../lib/ArcadeCore/src -x c++ -fsaniti
 python3 sheet.py bf out/bf.png title play clear over   # contact sheet
 ```
 Use it to check visuals and game logic before flashing. Also rebuild the thumbnails (`games/*/thumb.png`) and `web/img/*.png` from it when a game's look changes.
+
+## Browser player (`web/play/`, `tools/web/`)
+
+Every game also builds to WebAssembly with Emscripten, from the same `game.h`, and runs at https://drhammadkhan.github.io/nova-arcade/play/.
+- `scripts/build-web.sh` (run after `build.sh`; needs `em++` and LovyanGFX for the font) writes `build/site/play/<game>.js/.wasm`. CI installs Emscripten 6.0.10 with `setup-emsdk`.
+- It builds with `-DARCADE_SIM -DARCADE_WEB`, reusing the simulator's stubs. `-Itools/web` comes first, so `tools/web/ArcadeSimSystem.h` replaces the sim's: Preferences live in localStorage (`nova-arcade/<namespace>/<key>`), and `exitToLauncher()` calls `arcadeWebExit()`, which goes back to the game list.
+- `tools/web/web_main.cpp` exports `web_init`, `web_pad`, `web_frame` (returns 320×240 RGBA) and `web_audio` (the synth's `renderBlock` at 22.05 kHz). `web/play/play.js` handles the keyboard, the Gamepad API, the canvas and Web Audio.
+- When adding a game, add it to `GAMES` in `build-web.sh` and in `web/play/play.js`.
+- To test locally: build into a copy of `web/`, serve it with `python3 -m http.server`, and drive it with Playwright (Chromium is preinstalled in cloud sessions).
 
 ## Status
 

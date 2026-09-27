@@ -1,7 +1,12 @@
 #pragma once
 #include "Arduino.h"
 #define PROGMEM
+// LovyanGFX's 6x8 font: found via -I<LovyanGFX>/src, else the default arduino-cli library folder
+#if __has_include(<lgfx/Fonts/glcdfont.h>)
+#include <lgfx/Fonts/glcdfont.h>
+#else
 #include "/root/Arduino/libraries/LovyanGFX/src/lgfx/Fonts/glcdfont.h"
+#endif
 namespace lgfx { struct swap565_t { uint16_t v; }; }
 enum textdatum_t { top_left, top_center, middle_center, top_right };
 namespace fonts { struct F{}; static F Font0; }
