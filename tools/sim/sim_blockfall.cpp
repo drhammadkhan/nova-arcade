@@ -29,7 +29,7 @@ int main() {
   simStep(step, 0, 0, BTN_START);
   int pieces = 0;
   for (int f = 0; f < 6000 && state != ST_OVER; f++) {
-    if (state == ST_PLAY && cur.y <= HIDDEN && (f % 2 == 0)) { aiPlace(); simStep(step, 0, 0, BTN_UP); pieces++; }
+    if (state == ST_PLAY && cur.y <= HIDDEN && (f % 2 == 0)) { aiPlace(); simStep(step, 0, 0, BTN_X); pieces++; }
     else simStep(step);
     if (f == 1500) simShot(draw, "out/bf_play.ppm");
     if (state == ST_CLEAR && nClear >= 2 && clearT == 4) simShot(draw, "out/bf_clear.ppm");

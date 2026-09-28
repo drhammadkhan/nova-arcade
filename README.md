@@ -4,7 +4,7 @@ A retro games console for the ESP32-S3 2.8" board. A launcher loads games from t
 
 **Install it:** https://drhammadkhan.github.io/nova-arcade/ (Chrome or Edge on a computer)
 
-**Play it in a browser, no board needed:** https://drhammadkhan.github.io/nova-arcade/play/ (keyboard or any gamepad)
+**Play it in a browser, no board needed:** https://drhammadkhan.github.io/nova-arcade/play/ (keyboard, any gamepad, or on-screen touch controls on a phone or tablet)
 
 ![Launcher](web/img/launcher.png)
 
