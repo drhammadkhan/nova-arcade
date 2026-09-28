@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07061a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nova Arcade">
+<link rel="manifest" href="app.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Nova Arcade Player</title>
 <meta name="description" content="Play the Nova Arcade games in your browser, with a keyboard or a gamepad.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -100,6 +108,80 @@
   .help td:first-child { width: 48%; color: var(--text); }
   .pad-status { font-size: 13px; color: var(--muted); margin: -6px 0 14px; }
   .pad-status.on { color: #7fe39a; }
+  @media (max-width: 560px) {
+    .library { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .game .body { padding: 10px 11px 12px; }
+    .game h3 { font-size: 10px; }
+    .game p { font-size: 12.5px; line-height: 1.45; }
+    nav a { margin-left: 12px; font-size: 13px; }
+    nav a:nth-child(2) { display: none; }
+  }
+
+  /* ---- touch controls (phones and tablets) ---- */
+  .touch-ui { display: none; }
+  body.touch.playing { overflow: hidden; overscroll-behavior: none; touch-action: none;
+                       -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  body.touch.playing .grid { display: none; }
+  body.touch.playing header.top, body.touch.playing .help { display: none; }
+  body.touch.playing .wrap { max-width: none; padding: 0; }
+  body.touch.playing .player {
+    position: fixed; inset: 0; display: grid; gap: 0;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "bar bar bar" "screen screen screen" "dpad sys abxy";
+  }
+  body.touch.playing .stage { display: contents; }
+  body.touch.playing .bar { grid-area: bar; margin: 0; padding: 6px 8px; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+  body.touch.playing .bar h2 { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.touch.playing .bar .btn { padding: 6px 10px; font-size: 13px; }
+  body.touch.playing .bar .btn .label { display: none; }
+  body.touch.playing .screen { grid-area: screen; padding: 0; border: 0; border-radius: 0; background: #000;
+                               box-shadow: none; min-height: 0; }
+  body.touch.playing .overlay { inset: 0; }
+  body.touch.playing canvas { border-radius: 0; }
+  body.touch.playing .touch-ui { display: flex; align-items: center; justify-content: center; touch-action: none; }
+  body.touch.pad-connected .touch-ui { visibility: hidden; }
+  #dpad { grid-area: dpad; }
+  #abxy { grid-area: abxy; }
+  #sys { grid-area: sys; flex-direction: column; gap: 14px; }
+
+  @media (orientation: landscape) {
+    body.touch.playing .player {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas: "bar screen ." "dpad screen abxy" "sys screen .";
+    }
+    body.touch.playing .bar { flex-wrap: wrap; align-self: start; }
+    body.touch.playing .bar h2 { display: none; }
+    body.touch.playing .screen { align-self: center; }
+    #sys { flex-direction: row; padding-bottom: 10px; }
+  }
+
+  .dpad { position: relative; width: var(--dpad, 156px); height: var(--dpad, 156px); border-radius: 50%;
+          background: radial-gradient(circle, rgba(58,45,122,.55), rgba(20,16,52,.75)); border: 2px solid var(--line); }
+  .dpad .arm { position: absolute; background: #2a2160; border: 2px solid #4b3c98; border-radius: 8px; }
+  .dpad .arm.v { left: 34%; width: 32%; top: 8%; height: 84%; }
+  .dpad .arm.h { top: 34%; height: 32%; left: 8%; width: 84%; }
+  .dpad .dir { position: absolute; width: 32%; height: 32%; border-radius: 8px; display: grid; place-items: center;
+               color: #8a80c8; font-size: 16px; }
+  .dpad .dir.up { left: 34%; top: 8%; } .dpad .dir.down { left: 34%; bottom: 8%; }
+  .dpad .dir.left { top: 34%; left: 8%; } .dpad .dir.right { top: 34%; right: 8%; }
+  .dpad .dir.on { background: var(--cyan); color: #051018; }
+
+  .abxy { position: relative; width: var(--abxy, 168px); height: var(--abxy, 168px); }
+  .fb { position: absolute; width: 36%; height: 36%; border-radius: 50%; display: grid; place-items: center;
+        font: 700 20px Inter, sans-serif; color: #fff; border: 2px solid rgba(255,255,255,.25);
+        box-shadow: 0 4px 0 rgba(0,0,0,.45); }
+  .fb.on { transform: translateY(3px); box-shadow: none; filter: brightness(1.35); }
+  .fb[data-b="Y"] { left: 32%; top: 0; background: #b8932a; }
+  .fb[data-b="X"] { left: 0; top: 32%; background: #2d69c4; }
+  .fb[data-b="B"] { right: 0; top: 32%; background: #c43a50; }
+  .fb[data-b="A"] { left: 32%; bottom: 0; background: #2f9e55; }
+  .sb { min-width: 66px; padding: 8px 10px; border-radius: 999px; text-align: center;
+        font: 700 11px Inter, sans-serif; letter-spacing: 1px; color: var(--text);
+        background: #2a2160; border: 2px solid #4b3c98; }
+  .sb.on { background: var(--pink); color: #1a0520; }
 </style>
 </head>
 <body>
@@ -117,22 +199,35 @@
 
   <div class="lib-view">
     <h1>PLAY IN YOUR BROWSER</h1>
-    <p class="sub">The same games that run on the board, compiled to WebAssembly: same code, same pixels, same chiptunes. Play with the keyboard or plug in a gamepad. Hi-scores and settings are saved in this browser.</p>
+    <p class="sub">The same games that run on the board, compiled to WebAssembly: same code, same pixels, same chiptunes. Play with the keyboard, a gamepad, or the on-screen controls on a phone or tablet. Hi-scores and settings are saved in this browser.</p>
     <div class="library" id="library"></div>
   </div>
 
   <div class="player">
     <div class="bar">
-      <button class="btn" id="back" title="Back to the game list (Esc)">&larr; Games</button>
+      <button class="btn" id="back" title="Back to the game list (Esc)">&larr;<span class="label"> Games</span></button>
       <h2 id="title"></h2>
-      <button class="btn" id="sound" title="Mute or unmute the page (M)">&#128266; Sound on</button>
-      <button class="btn" id="full" title="Full screen (F)">&#x26F6; Full screen</button>
+      <button class="btn" id="sound" title="Mute or unmute the page (M)"></button>
+      <button class="btn" id="full" title="Full screen (F)">&#x26F6;<span class="label"> Full screen</span></button>
     </div>
     <div class="stage">
       <div class="screen" id="screen">
         <canvas id="canvas" width="320" height="240" aria-label="Game screen"></canvas>
         <div class="overlay" id="overlay" hidden></div>
       </div>
+      <!-- on-screen controls, shown on touch screens -->
+      <div class="touch-ui" id="dpad"><div class="dpad" id="dpadCtl" aria-label="D-pad">
+        <div class="arm v"></div><div class="arm h"></div>
+        <div class="dir up" data-d="UP">&#9650;</div><div class="dir down" data-d="DOWN">&#9660;</div>
+        <div class="dir left" data-d="LEFT">&#9664;</div><div class="dir right" data-d="RIGHT">&#9654;</div>
+      </div></div>
+      <div class="touch-ui" id="sys">
+        <div class="sb" data-b="SELECT">SELECT</div><div class="sb" data-b="START">START</div>
+      </div>
+      <div class="touch-ui" id="abxy"><div class="abxy">
+        <div class="fb" data-b="Y">Y</div><div class="fb" data-b="X">X</div>
+        <div class="fb" data-b="B">B</div><div class="fb" data-b="A">A</div>
+      </div></div>
       <div class="card help">
         <h3>KEYBOARD</h3>
         <table>

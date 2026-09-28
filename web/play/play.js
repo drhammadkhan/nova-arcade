@@ -1,7 +1,8 @@
 // Nova Arcade browser player. Each game is its own WebAssembly module
 // (built by scripts/build-web.sh from the same C++ as the firmware).
-// This page supplies the pad state, draws the frame to a canvas and
-// streams the game's synth through Web Audio.
+// This page supplies the pad state (keyboard, gamepad or on-screen touch
+// controls), draws the frame to a canvas and streams the game's synth
+// through Web Audio.
 
 const GAMES = [
   { id: "novalance", title: "NOVA LANCE", desc: "Side-scrolling synthwave shoot-'em-up with a boss every stage." },
@@ -58,7 +59,8 @@ function renderLibrary() {
     const hi = hiScore(g.id);
     // only show scores the player actually set (the defaults are never saved)
     if (hi) b.querySelector(".hi").textContent = `BEST ${String(hi).padStart(7, "0")}`;
-    b.addEventListener("click", () => { location.hash = g.id; });
+    // start the audio inside the tap itself: iOS only unlocks sound in a user gesture
+    b.addEventListener("click", () => { startAudio(); location.hash = g.id; });
     lib.appendChild(b);
   }
 }
@@ -109,7 +111,7 @@ function setMuted(m) {
   muted = m;
   try { localStorage.setItem("nova-arcade/player/muted", m ? "1" : "0"); } catch (e) {}
   if (audio.gain) audio.gain.gain.value = m ? 0 : PAGE_GAIN;
-  $("sound").innerHTML = m ? "&#128263; Sound off" : "&#128266; Sound on";
+  $("sound").innerHTML = m ? "&#128263;<span class=\"label\"> Sound off</span>" : "&#128266;<span class=\"label\"> Sound on</span>";
 }
 
 // ------------------------------------------------------------ input
@@ -122,10 +124,12 @@ function readPad() {
   const status = $("padStatus");
   if (pad && pad.index !== padIndex) {
     padIndex = pad.index;
+    document.body.classList.add("pad-connected");   // a real pad takes over from the touch controls
     status.textContent = `Connected: ${pad.id.replace(/\(.*?\)/g, "").trim() || "gamepad"}`;
     status.classList.add("on");
   } else if (!pad && padIndex !== -1) {
     padIndex = -1;
+    document.body.classList.remove("pad-connected");
     status.textContent = "No gamepad yet: plug one in or pair it, then press a button.";
     status.classList.remove("on");
   }
@@ -135,7 +139,7 @@ function readPad() {
     ax = dz(pad.axes[0] || 0);
     ay = dz(pad.axes[1] || 0);
   }
-  held |= keysHeld;
+  held |= keysHeld | touchHeld();
   // like the hardware: the D-pad overrides the stick
   const dx = (held & B.RIGHT ? 1 : 0) - (held & B.LEFT ? 1 : 0);
   const dy = (held & B.DOWN ? 1 : 0) - (held & B.UP ? 1 : 0);
@@ -159,18 +163,110 @@ window.addEventListener("keyup", (e) => {
 });
 window.addEventListener("blur", () => { keysHeld = 0; });
 
+// ------------------------------------------------------------ touch controls
+// Every finger on a control is tracked separately, so you can hold the D-pad
+// and press A at the same time, or slide a thumb from one button to the next.
+const touches = new Map();   // pointerId -> button bits
+let touchMode = false;
+function touchHeld() { let h = 0; for (const v of touches.values()) h |= v; return h; }
+
+function setTouchMode(on) {
+  if (on === touchMode) return;
+  touchMode = on;
+  document.body.classList.toggle("touch", on);
+  fitCanvas();
+}
+
+function showPressed() {
+  const h = touchHeld();
+  document.querySelectorAll(".dir").forEach((el) => el.classList.toggle("on", !!(h & B[el.dataset.d])));
+  document.querySelectorAll(".fb, .sb").forEach((el) => el.classList.toggle("on", !!(h & B[el.dataset.b])));
+}
+
+function setTouch(id, bits) {
+  const before = touches.get(id) || 0;
+  if (bits) touches.set(id, bits); else touches.delete(id);
+  if (bits & ~before && navigator.vibrate) navigator.vibrate(8);   // a little click on Android
+  showPressed();
+}
+
+// D-pad: the direction comes from where the thumb is relative to the centre,
+// with diagonals, so rolling the thumb round works like a real pad.
+function dpadBits(e, el) {
+  const r = el.getBoundingClientRect();
+  const x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
+  if (Math.hypot(x, y) < r.width * 0.12) return 0;
+  const a = Math.atan2(y, x) * 180 / Math.PI;   // 0 = right, 90 = down
+  let bits = 0;
+  if (a > -67.5 && a < 67.5) bits |= B.RIGHT;
+  if (a > 22.5 && a < 157.5) bits |= B.DOWN;
+  if (a > 112.5 || a < -112.5) bits |= B.LEFT;
+  if (a > -157.5 && a < -22.5) bits |= B.UP;
+  return bits;
+}
+const dpadEl = $("dpadCtl");
+dpadEl.addEventListener("pointerdown", (e) => { dpadEl.setPointerCapture(e.pointerId); setTouch(e.pointerId, dpadBits(e, dpadEl)); e.preventDefault(); });
+dpadEl.addEventListener("pointermove", (e) => { if (touches.has(e.pointerId) || e.buttons) setTouch(e.pointerId, dpadBits(e, dpadEl)); });
+
+// Face and system buttons: whichever button is under the finger is held.
+function buttonAt(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const b = el && el.closest && el.closest(".fb, .sb");
+  return b ? B[b.dataset.b] : 0;
+}
+for (const id of ["abxy", "sys"]) {
+  const el = $(id);
+  el.addEventListener("pointerdown", (e) => { el.setPointerCapture(e.pointerId); setTouch(e.pointerId, buttonAt(e.clientX, e.clientY)); e.preventDefault(); });
+  el.addEventListener("pointermove", (e) => { if (touches.has(e.pointerId)) setTouch(e.pointerId, buttonAt(e.clientX, e.clientY)); });
+}
+for (const ev of ["pointerup", "pointercancel", "lostpointercapture"])
+  window.addEventListener(ev, (e) => { if (touches.has(e.pointerId)) setTouch(e.pointerId, 0); });
+document.addEventListener("contextmenu", (e) => { if (touchMode && document.body.classList.contains("playing")) e.preventDefault(); });
+
+// Phones and tablets get the touch controls; a desktop with a touch screen
+// switches to them the first time it is touched. ?touch=1 forces them on.
+const coarse = window.matchMedia ? window.matchMedia("(pointer: coarse)") : { matches: false };
+window.addEventListener("pointerdown", (e) => { if (e.pointerType === "touch") setTouchMode(true); }, true);
+
+// keep the phone from dimming while a game runs
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && !wakeLock && navigator.wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); }
+    else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) {}
+}
+
 // ------------------------------------------------------------ screen
 function fitCanvas() {
   const screen = $("screen");
   const full = document.fullscreenElement === screen;
-  const availW = full ? window.innerWidth : screen.clientWidth - 28;
-  const availH = full ? window.innerHeight : Math.max(240, window.innerHeight - 170);
+  let availW, availH;
+  if (full) { availW = window.innerWidth; availH = window.innerHeight; }
+  else if (touchMode && document.body.classList.contains("playing")) {
+    // leave room for the controls: below the screen in portrait, beside it in landscape
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const landscape = vw > vh;
+    // portrait: D-pad, START/SELECT and the face buttons share one row, so size them to the width
+    const ctl = Math.round(landscape ? Math.max(120, Math.min(176, vh * 0.42))
+                                     : Math.max(104, Math.min(176, (vw - 96) / 2.12)));
+    document.documentElement.style.setProperty("--dpad", `${ctl}px`);
+    document.documentElement.style.setProperty("--abxy", `${Math.round(ctl * 1.08)}px`);
+    if (landscape) { availW = vw - 2 * (ctl + 24); availH = vh; }
+    else { availW = vw; availH = vh - 44 - ctl - 90; }
+  } else {
+    availW = screen.clientWidth - 28;
+    availH = Math.max(240, window.innerHeight - 170);
+  }
   let scale = Math.min(availW / 320, availH / 240);
-  scale = scale >= 1 ? Math.floor(scale) || 1 : scale;   // whole-number scaling keeps pixels square
+  // whole-number scaling keeps pixels square on big screens; phones use every pixel they have
+  if (!(touchMode && !full)) scale = scale >= 1 ? Math.floor(scale) || 1 : scale;
+  scale = Math.max(scale, 0.5);
   canvas.style.width = `${320 * scale}px`;
   canvas.style.height = `${240 * scale}px`;
 }
 window.addEventListener("resize", fitCanvas);
+window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 200));
 document.addEventListener("fullscreenchange", fitCanvas);
 
 function toggleFullscreen() {
@@ -195,6 +291,7 @@ async function launch(entry) {
   stopGame();
   current = entry;
   document.body.classList.add("playing");
+  keepAwake(true);
   $("title").textContent = entry.title;
   document.title = `${entry.title} - Nova Arcade Player`;
   overlay.hidden = false;
@@ -223,6 +320,9 @@ function stopGame() {
   cancelAnimationFrame(rafId);
   game = null;
   keysHeld = 0;
+  touches.clear();
+  showPressed();
+  keepAwake(false);
 }
 
 function showLibrary() {
@@ -231,6 +331,7 @@ function showLibrary() {
   if (document.fullscreenElement) document.exitFullscreen();
   document.body.classList.remove("playing");
   document.title = "Nova Arcade Player";
+  window.scrollTo(0, 0);
   renderLibrary();
 }
 
@@ -244,14 +345,20 @@ $("back").addEventListener("click", () => { location.hash = ""; });
 $("full").addEventListener("click", toggleFullscreen);
 $("sound").addEventListener("click", () => { startAudio(); setMuted(!muted); });
 document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && game) keepAwake(true);   // the lock is dropped whenever the page is hidden
   if (!audio.ctx) return;
   if (document.hidden) audio.ctx.suspend(); else if (game) audio.ctx.resume();
 });
-// browsers only allow sound after a click or key press on the page
-window.addEventListener("pointerdown", () => { if (game) startAudio(); });
-window.addEventListener("keydown", () => { if (game) startAudio(); });
+// browsers only allow sound after a tap, click or key press on the page
+// (iOS Safari only counts touchend and click, not touchstart or pointerdown)
+for (const ev of ["pointerdown", "touchend", "click", "keydown"])
+  window.addEventListener(ev, () => { if (game) startAudio(); }, true);
+// iPhone Safari has no full screen API for pages: hide the button there
+// (adding the page to the home screen gives a full-screen app instead)
+if (!document.fullscreenEnabled) $("full").style.display = "none";
 window.addEventListener("hashchange", route);
 // handy from the dev tools console: novaPlayer.game is the running wasm module
 window.novaPlayer = { get game() { return game; }, get audio() { return audio; } };
 setMuted(muted);
+setTouchMode(coarse.matches || /[?&]touch=1/.test(location.search));
 route();
