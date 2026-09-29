@@ -14,6 +14,7 @@ const GAMES = [
   { id: "hoprush", title: "HOP RUSH", desc: "Cross the road, ride the river, fill all five docks." },
   { id: "voltrally", title: "VOLT RALLY", desc: "Paddle tennis against a ladder of six CPU rivals." },
   { id: "mazemunch", title: "MAZE MUNCH", desc: "Clear the maze while four wisps hunt you down." },
+  { id: "pixelpeaks", title: "PIXEL PEAKS", desc: "A little judoka runs, jumps and rolls over three mountain worlds." },
 ];
 
 // Button bits, matching BTN_* in lib/ArcadeCore/src/arcade/Input.h
@@ -38,6 +39,7 @@ let game = null;        // the running wasm module
 let current = null;     // its GAMES entry
 let rafId = 0;
 let keysHeld = 0;
+let tapped = 0;         // presses since the last frame, so a quick tap is never missed
 let muted = false;
 try { muted = localStorage.getItem("nova-arcade/player/muted") === "1"; } catch (e) {}
 
@@ -139,7 +141,7 @@ function readPad() {
     ax = dz(pad.axes[0] || 0);
     ay = dz(pad.axes[1] || 0);
   }
-  held |= keysHeld | touchHeld();
+  held |= keysHeld | touchHeld() | tapped;
   // like the hardware: the D-pad overrides the stick
   const dx = (held & B.RIGHT ? 1 : 0) - (held & B.LEFT ? 1 : 0);
   const dy = (held & B.DOWN ? 1 : 0) - (held & B.UP ? 1 : 0);
@@ -156,6 +158,7 @@ window.addEventListener("keydown", (e) => {
   if (bit === undefined) return;
   e.preventDefault();
   keysHeld |= bit;
+  tapped |= bit;
 });
 window.addEventListener("keyup", (e) => {
   const bit = KEYS[e.code];
@@ -187,6 +190,7 @@ function showPressed() {
 function setTouch(id, bits) {
   const before = touches.get(id) || 0;
   if (bits) touches.set(id, bits); else touches.delete(id);
+  tapped |= bits & ~before;
   if (bits & ~before && navigator.vibrate) navigator.vibrate(8);   // a little click on Android
   showPressed();
 }
@@ -315,6 +319,7 @@ function frame() {
   if (!game) return;
   const { held, ax, ay } = readPad();
   game._web_pad(held >>> 0, ax, ay);
+  tapped = 0;
   const ptr = game._web_frame();
   if (!game) return;   // the game may have exited during this frame
   image.data.set(game.HEAPU8.subarray(ptr, ptr + 320 * 240 * 4));

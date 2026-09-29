@@ -181,7 +181,8 @@ static void scanGames() {
                             {"ASTRO DRIFT", "Split space rocks, dodge the hunters", "out/ad_play.ppm"},
                             {"HOP RUSH", "Cross the road, ride the river", "out/hr_play.ppm"},
                             {"VOLT RALLY", "Paddle tennis against six rivals", "out/vr_play.ppm"},
-                            {"MAZE MUNCH", "Clear the maze, outrun the wisps", "out/mm_play.ppm"}};
+                            {"MAZE MUNCH", "Clear the maze, outrun the wisps", "out/mm_play.ppm"},
+                            {"PIXEL PEAKS", "A little judoka climbs three mountain worlds", "out/pp_w1a.ppm"}};
   ngames = sizeof(names) / sizeof(names[0]);
   for (int i = 0; i < ngames; i++) {
     memset(&games[i], 0, sizeof(Game));

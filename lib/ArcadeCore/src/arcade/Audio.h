@@ -26,6 +26,9 @@ enum Sfx : uint8_t {
   SFX_MARCH,       // invader step, param = 0-3 note
   SFX_UFO,         // warble (retrigger while the saucer is on screen)
   SFX_SELECT,      // menu confirm
+  SFX_JUMP,        // rising chirp
+  SFX_COIN,        // bright three-note chime
+  SFX_STOMP,       // squishy thud
   SFX_COUNT
 };
 
@@ -273,6 +276,9 @@ static inline void triggerSfx(uint8_t id, uint8_t param) {
       if (pulse(2, 700, 1, 0.12f, 0.25f, D25)) warbleCount = (uint32_t)(0.25f * RATE);
       break;
     case SFX_SELECT:  if (pulse(5, 0, 1, 0.22f, 0.3f, D25)) arp({79, 84, 91}, 0.05f); break;
+    case SFX_JUMP:    pulse(2, 300, 1.00045f, 0.14f, 0.13f, D25); break;
+    case SFX_COIN:    if (pulse(3, 0, 1, 0.16f, 0.16f, D25)) arp({91, 96, 100}, 0.035f); break;
+    case SFX_STOMP:   pulse(3, 260, 0.9993f, 0.2f, 0.1f, D50); noise(2, 1800, 0.9998f, 0.18f, 0.07f); break;
   }
 }
 
