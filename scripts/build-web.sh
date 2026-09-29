@@ -10,7 +10,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${OUT:-$ROOT/build/site/play}"
-GAMES="NovaLance Blockfall BrickStorm AlienTide NeonSerpent AstroDrift HopRush VoltRally MazeMunch"
+GAMES="NovaLance Blockfall BrickStorm AlienTide NeonSerpent AstroDrift HopRush VoltRally MazeMunch PixelPeaks"
 if [ -z "${LGFX_DIR:-}" ]; then
   USERDIR="$(arduino-cli config get directories.user 2>/dev/null || echo "$HOME/Arduino")"
   LGFX_DIR="$USERDIR/libraries/LovyanGFX"
