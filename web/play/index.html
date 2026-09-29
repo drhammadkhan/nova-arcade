@@ -30,6 +30,7 @@
     --radius: 14px;
   }
   * { box-sizing: border-box; }
+  html { touch-action: manipulation; }   /* no double-tap zoom anywhere; pinch still works on the game list */
   body {
     margin: 0; color: var(--text); background: var(--bg);
     font: 16px/1.6 Inter, system-ui, -apple-system, Segoe UI, sans-serif;
@@ -140,6 +141,8 @@
                                box-shadow: none; min-height: 0; }
   body.touch.playing .overlay { inset: 0; }
   body.touch.playing canvas { border-radius: 0; }
+  body.touch.playing .player, body.touch.playing .player * { touch-action: none; }
+  body.touch.playing .bar .btn { touch-action: manipulation; }
   body.touch.playing .touch-ui { display: flex; align-items: center; justify-content: center; touch-action: none; }
   body.touch.pad-connected .touch-ui { visibility: hidden; }
   #dpad { grid-area: dpad; }

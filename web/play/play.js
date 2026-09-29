@@ -174,6 +174,7 @@ function setTouchMode(on) {
   if (on === touchMode) return;
   touchMode = on;
   document.body.classList.toggle("touch", on);
+  lockZoom(touchPlaying());
   fitCanvas();
 }
 
@@ -227,6 +228,40 @@ document.addEventListener("contextmenu", (e) => { if (touchMode && document.body
 // switches to them the first time it is touched. ?touch=1 forces them on.
 const coarse = window.matchMedia ? window.matchMedia("(pointer: coarse)") : { matches: false };
 window.addEventListener("pointerdown", (e) => { if (e.pointerType === "touch") setTouchMode(true); }, true);
+
+// ------------------------------------------------------------ no zooming while playing
+// iOS Safari ignores touch-action for double-tap zoom, and once it has zoomed
+// in, our no-gesture rule also blocks the pinch that would zoom back out. So:
+// cancel the second tap of a double tap, block Safari's pinch gestures, lock
+// the viewport scale while a game runs, and snap back if a zoom slips through.
+const touchPlaying = () => touchMode && document.body.classList.contains("playing");
+const vpMeta = document.querySelector('meta[name="viewport"]');
+const VP_FREE = vpMeta.content;                                         // the game list can still be zoomed
+const VP_LOCKED = `${VP_FREE}, minimum-scale=1, maximum-scale=1, user-scalable=no`;
+function lockZoom(on) { vpMeta.content = on ? VP_LOCKED : VP_FREE; }
+function resetZoom() {
+  if (!window.visualViewport || visualViewport.scale <= 1.01) return;
+  // changing the viewport limits makes Safari drop back to 100%
+  vpMeta.content = `${VP_FREE}, maximum-scale=1.0001`;
+  requestAnimationFrame(() => { lockZoom(touchPlaying()); fitCanvas(); });
+}
+let lastTouchEnd = 0;
+const inBar = (e) => e.target && e.target.closest && e.target.closest(".bar");
+document.addEventListener("touchstart", (e) => {
+  // the on-screen controls use pointer events, so cancelling the touch only stops browser gestures
+  if (touchPlaying() && !inBar(e)) e.preventDefault();
+}, { passive: false });
+document.addEventListener("touchend", (e) => {
+  if (!touchPlaying()) return;
+  const now = performance.now();
+  if (now - lastTouchEnd < 350 && !inBar(e)) e.preventDefault();   // second tap of a double tap
+  lastTouchEnd = now;
+  resetZoom();
+}, { passive: false });
+for (const ev of ["gesturestart", "gesturechange", "gestureend"])      // Safari's pinch events
+  document.addEventListener(ev, (e) => { if (touchPlaying()) e.preventDefault(); }, { passive: false });
+document.addEventListener("dblclick", (e) => { if (touchPlaying()) e.preventDefault(); }, { passive: false });
+if (window.visualViewport) visualViewport.addEventListener("resize", () => { if (touchPlaying()) resetZoom(); });
 
 // keep the phone from dimming while a game runs
 let wakeLock = null;
@@ -291,6 +326,8 @@ async function launch(entry) {
   stopGame();
   current = entry;
   document.body.classList.add("playing");
+  lockZoom(touchMode);
+  resetZoom();
   keepAwake(true);
   $("title").textContent = entry.title;
   document.title = `${entry.title} - Nova Arcade Player`;
@@ -330,6 +367,7 @@ function showLibrary() {
   current = null;
   if (document.fullscreenElement) document.exitFullscreen();
   document.body.classList.remove("playing");
+  lockZoom(false);
   document.title = "Nova Arcade Player";
   window.scrollTo(0, 0);
   renderLibrary();
