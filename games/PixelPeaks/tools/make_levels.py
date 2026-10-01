@@ -11,7 +11,9 @@ Map characters (15 rows, 16 px tiles, row 14 is the bottom of the screen):
   P  start          C  checkpoint lantern      G  goal gate
   t  tree (per world)  l  stone lantern  u  bush  v  flowers  r  rock      (scenery)
 
-Reach: a jump clears 4 tiles across and 3 tiles up, so gaps stay <= 4 and steps <= 3."""
+Reach: a full jump rises 68 px (4.3 tiles) and carries 5.6 tiles. Levels keep a margin: climbs of at
+most 3 tiles, gaps of at most 4, and nothing to collect more than 4 rows above where she can stand.
+check_reach() enforces this for every coin, scroll, lucky box, plank and the goal."""
 import os
 
 ROWS = 15
@@ -73,14 +75,27 @@ class Lvl:
                 # a jump carries her ~5 columns between standing spots on the level, 4 when climbing 2-3 tiles
                 if (up <= 1 and dx <= 5) or (2 <= up <= 3 and dx <= 4) or (up < 0 and dx <= 5 + (-up) // 2):
                     seen.add((x2, y2)); todo.append((x2, y2))
+        def show(x):   # the neighbourhood, with the places she can reach marked '*'
+            for yy in range(ROWS):
+                print("".join("*" if (xx, yy) in seen else cell(xx, yy) for xx in range(max(0, x - 20), min(self.w, x + 12))))
+        problems = []
         for y in range(ROWS):
             for x in range(self.w):
-                if g[y][x] in "SG":
-                    ok = any(abs(x - sx) <= 3 and 0 <= sy - y <= 4 for (sx, sy) in seen)
-                    if not ok:   # show the neighbourhood, with the places she can reach marked '*'
-                        for yy in range(ROWS):
-                            print("".join("*" if (xx, yy) in seen else cell(xx, yy) for xx in range(max(0, x - 20), min(self.w, x + 12))))
-                    assert ok, "%s: %s at column %d row %d can't be reached" % (self.name, g[y][x], x, y)
+                ch = g[y][x]
+                if ch in "oSG":            # touch it: up to 4 rows above a standing spot, or drop onto it from one
+                    ok = any(abs(x - sx) <= 3 and -6 <= sy - y <= 4 for (sx, sy) in seen)
+                elif ch in "?!":           # bump it from below
+                    ok = any(abs(x - sx) <= 1 and 1 <= sy - y <= 4 for (sx, sy) in seen)
+                elif ch == "=" and (x == 0 or g[y][x - 1] != "="):   # every plank run must be reachable
+                    run = range(x, next((xx for xx in range(x, self.w) if g[y][xx] != "="), self.w))
+                    ok = any((xx, y - 1) in seen for xx in run)
+                else:
+                    continue
+                if not ok: problems.append((ch, x, y))
+        for ch, x, y in problems:
+            show(x)
+            print("%s: %s at column %d row %d can't be reached" % (self.name, ch, x, y))
+        assert not problems, "%s: %d unreachable things" % (self.name, len(problems))
 
 # ---------------------------------------------------------------- 1: BLOSSOM HILLS (a gentle start)
 def blossom():
@@ -88,7 +103,7 @@ def blossom():
     L.ground(0, 40)
     L.put(3, 11, "P")
     for x, ch in ((1, "u"), (7, "t"), (12, "l"), (18, "v"), (26, "v")): L.on(x, ch)
-    L.put(14, 8, "?"); L.put(15, 8, "!"); L.put(16, 8, "?")
+    L.put(14, 9, "?"); L.put(15, 9, "!"); L.put(16, 9, "?")   # hop up on the boxes for the coins
     L.coins(14, 16, 6)
     L.on(23, "b")
     L.ground(29, 40, 11); L.ground(34, 40, 10)
@@ -105,7 +120,7 @@ def blossom():
     L.fill(81, 84, 13, 14, "~")
     L.ground(85, 104)
     L.put(90, 11, "^"); L.put(91, 11, "^")
-    L.put(95, 8, "?"); L.coins(94, 96, 6)
+    L.put(95, 9, "?"); L.coins(94, 96, 6)
     L.on(98, "b"); L.on(103, "b"); L.on(87, "r")
     L.fill(100, 100, 11, 11, "X"); L.fill(101, 101, 10, 11, "X"); L.fill(102, 102, 9, 11, "X")
     L.put(105, 10, "M"); L.coins(107, 110, 7)        # first moving plank over a wide gap
@@ -127,7 +142,7 @@ def bamboo():
     L.ground(0, 30)
     L.put(3, 11, "P")
     for x, ch in ((6, "t"), (11, "u"), (16, "l"), (22, "t")): L.on(x, ch)
-    L.put(18, 8, "?"); L.put(19, 8, "?"); L.coins(18, 19, 6)
+    L.put(18, 9, "?"); L.put(19, 9, "?"); L.coins(18, 19, 6)
     L.on(26, "b")
     L.fill(31, 35, 13, 14, "~"); L.row(32, 34, 10, "="); L.coins(32, 34, 9)
     L.ground(36, 58); L.ground(42, 48, 10); L.ground(45, 48, 8)
@@ -161,7 +176,7 @@ def peaks():
     L.ground(0, 26)
     L.put(3, 11, "P")
     for x, ch in ((7, "t"), (13, "l"), (19, "r"), (24, "t")): L.on(x, ch)
-    L.on(16, "b"); L.put(12, 8, "?"); L.coins(11, 13, 6)
+    L.on(16, "b"); L.put(12, 9, "?"); L.coins(11, 13, 6)
     L.ground(27, 44, 10); L.ground(33, 44, 8)
     L.on(30, "k"); L.put(38, 4, "c"); L.on(41, "b")
     L.row(34, 36, 7, "^")

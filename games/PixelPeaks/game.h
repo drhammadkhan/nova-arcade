@@ -339,7 +339,7 @@ static void updateHero(const Pad& in) {
     if (h.rollT && boxSolid(h.x, h.y - (HH - RH), HW, HH)) { /* no room to jump out of a roll here */ }
     else {
       if (h.rollT) { h.y -= HH - RH; h.rollT = 0; h.rollCd = 14; }
-      h.vy = -6.3f; h.onGround = false; h.coyote = 0; h.jumpBuf = 0; h.riding = nullptr;
+      h.vy = -7.0f; h.onGround = false;   // rises ~4.3 tiles: 3-tile climbs with room to spare h.coyote = 0; h.jumpBuf = 0; h.riding = nullptr;
       audio::play(SFX_JUMP);
       dust(h.x + HW / 2, h.y + HH, 4);
     }
@@ -479,7 +479,7 @@ static void updateEnemies() {
       shake = max(shake, 2.0f);
     } else if (hero.vy > 0.5f && hero.y + hh - e.y < 10 && e.type != E_CHESTNUT) {   // stomp
       if (e.type == E_MOCHI) { e.state = 1; e.t = 0; } else { e.state = 2; e.vy = -2; e.vx = 0; e.t = 0; }
-      hero.vy = input::pad.down(BTN_A) ? -6.6f : -4.4f;
+      hero.vy = input::pad.down(BTN_A) ? -7.2f : -4.8f;
       addScore(100); popupNum((int)cx - 8, (int)e.y - 10, 100);
       audio::play(SFX_STOMP); burst(cx, e.y, 8, rgbS(246, 242, 236), 1.4f);
     } else {
