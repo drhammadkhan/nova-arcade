@@ -13,7 +13,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/build"
 FQBN="esp32-bluepad32:esp32:esp32s3:PSRAM=opi,FlashSize=16M,CDCOnBoot=cdc"
-GAMES="NovaLance Blockfall BrickStorm AlienTide NeonSerpent AstroDrift HopRush VoltRally MazeMunch PixelPeaks"
+GAMES="NovaLance Blockfall BrickStorm AlienTide NeonSerpent AstroDrift HopRush VoltRally MazeMunch PixelPeaks TurboHorizon GemCascade CityShield"
 VERSION="${VERSION:-$(git -C "$ROOT" describe --tags --always 2>/dev/null || echo dev)}"
 
 rm -rf "$OUT"

@@ -15,6 +15,9 @@ const GAMES = [
   { id: "voltrally", title: "VOLT RALLY", desc: "Paddle tennis against a ladder of six CPU rivals." },
   { id: "mazemunch", title: "MAZE MUNCH", desc: "Clear the maze while four wisps hunt you down." },
   { id: "pixelpeaks", title: "PIXEL PEAKS", desc: "A little judoka runs, jumps and rolls over three mountain worlds." },
+  { id: "turbohorizon", title: "TURBO HORIZON", desc: "Race the clock down a sunset highway, through a canyon and into a neon city." },
+  { id: "gemcascade", title: "GEM CASCADE", desc: "Swap gems to make lines of three, chain cascades and set off novas." },
+  { id: "cityshield", title: "CITY SHIELD", desc: "Launch interceptors to stop the warheads raining down on six cities." },
 ];
 
 // Button bits, matching BTN_* in lib/ArcadeCore/src/arcade/Input.h

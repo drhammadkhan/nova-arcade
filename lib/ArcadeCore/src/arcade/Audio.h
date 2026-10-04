@@ -29,6 +29,10 @@ enum Sfx : uint8_t {
   SFX_JUMP,        // rising chirp
   SFX_COIN,        // bright three-note chime
   SFX_STOMP,       // squishy thud
+  SFX_SWAP,        // quick two-note flick
+  SFX_MATCH,       // sparkling chime, param = combo (rising pitch)
+  SFX_LAUNCH,      // missile whoosh
+  SFX_SKID,        // tyre screech / scrape
   SFX_COUNT
 };
 
@@ -95,6 +99,10 @@ static bool songDone = true;
 static int16_t echoBuf[4096];
 static uint16_t echoPos = 0;
 static float lp = 0;
+
+// Engine drone (racing games): set with audio::engine(); 0 volume = off
+static volatile float engineHz = 0, engineVol = 0;
+static float engPhase = 0, engPhase2 = 0, engLevel = 0, engHzNow = 0;
 
 static QueueHandle_t sfxQueue = nullptr;
 static bool running = false;
@@ -279,6 +287,15 @@ static inline void triggerSfx(uint8_t id, uint8_t param) {
     case SFX_JUMP:    pulse(2, 300, 1.00045f, 0.14f, 0.13f, D25); break;
     case SFX_COIN:    if (pulse(3, 0, 1, 0.16f, 0.16f, D25)) arp({91, 96, 100}, 0.035f); break;
     case SFX_STOMP:   pulse(3, 260, 0.9993f, 0.2f, 0.1f, D50); noise(2, 1800, 0.9998f, 0.18f, 0.07f); break;
+    case SFX_SWAP:    if (pulse(1, 0, 1, 0.10f, 0.08f, D12)) arp({76, 83}, 0.03f); break;
+    case SFX_MATCH: {
+      uint8_t b = (uint8_t)(79 + min((int)param, 8) * 2);
+      if (pulse(3, 0, 1, 0.17f, 0.24f, D25)) arp({b, (uint8_t)(b + 4), (uint8_t)(b + 7), (uint8_t)(b + 12)}, 0.04f);
+      noise(1, 14000, 1, 0.05f, 0.08f);
+      break;
+    }
+    case SFX_LAUNCH:  noise(2, 2500, 1.00012f, 0.16f, 0.22f); pulse(1, 520, 1.0002f, 0.07f, 0.12f, D12); break;
+    case SFX_SKID:    noise(2, 9000, 0.99990f, 0.13f, 0.12f); break;
   }
 }
 
@@ -307,8 +324,18 @@ static inline void renderBlock(int16_t* out, int frames) {
     float wet = mel + echo * 0.38f;
     echoBuf[echoPos] = (int16_t)constrain(wet * 32767.0f, -32767.0f, 32767.0f);
     echoPos = (echoPos + 1) & 4095;
+    // engine: two detuned sawtooths, glides to the target pitch and volume
+    float eng = 0;
+    engLevel += (engineVol * sfxGain() - engLevel) * 0.0008f;
+    if (engLevel > 0.0005f) {
+      engHzNow += (engineHz - engHzNow) * 0.0012f;
+      engPhase += engHzNow / RATE; if (engPhase >= 1) engPhase -= 1;
+      engPhase2 += engHzNow * 1.007f / RATE; if (engPhase2 >= 1) engPhase2 -= 1;
+      float saw = (engPhase * 2 - 1) * 0.6f + (engPhase2 < 0.3f ? 0.4f : -0.4f);
+      eng = saw * engLevel;
+    }
     float mix = mel + echo * 0.30f + voiceSample(vBass) + voiceSample(vDrum) +
-                voiceSample(vSfxA) + voiceSample(vSfxB);
+                voiceSample(vSfxA) + voiceSample(vSfxB) + eng;
     lp += (mix - lp) * 0.55f;
     float s = lp * 26000.0f * master;
     if (s > 32767) s = 32767;
@@ -416,6 +443,8 @@ inline void play(Sfx s, uint8_t param = 0) {
   xQueueSend(sfxQueue, &msg, 0);
 }
 inline void music(uint8_t song) { requestedSong = song; }
+// Engine drone for racing games: pitch in Hz (roughly 40-240), volume 0..1 (0 = off).
+inline void engine(float hz, float vol) { engineHz = hz; engineVol = vol; }
 
 // Volume 0..10 (0 = mute). On the ES8311 board the codec's DAC volume is used.
 inline void setVolume(int v) {

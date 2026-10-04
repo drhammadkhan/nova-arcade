@@ -76,6 +76,7 @@ inline void armReturnToLauncher() {
 
 inline void exitToLauncher() {
   audio::music(0);
+  audio::engine(0, 0);
 #ifndef ARCADE_SIM
   for (int b = 200; b >= 0; b -= 20) { gfx::lcd.setBrightness(b); delay(15); }
   gfx::lcd.fillScreen(0);
@@ -244,6 +245,7 @@ inline void run(void (*step)(const Pad&), void (*draw)()) {
     first = false;
     acc -= STEP_US;
   }
+  if (isPaused) audio::engine(0, 0);   // racing games set it again on the next step
   userDraw = draw;
   gfx::render(drawAll);
 }

@@ -16,8 +16,10 @@ A retro games console for the ESP32-S3 2.8" board. A launcher loads games from t
 | **Alien Tide**, a wave shooter | **Neon Serpent**, a snake game | **Astro Drift**, a space-rock shooter |
 | ![Hop Rush](web/img/hoprush.png) | ![Volt Rally](web/img/voltrally.png) | ![Maze Munch](web/img/mazemunch.png) |
 | **Hop Rush**, a road-and-river crossing | **Volt Rally**, paddle tennis | **Maze Munch**, a maze chase |
-| ![Pixel Peaks](web/img/pixelpeaks.png) | | |
-| **Pixel Peaks**, a platformer starring a little judoka | | |
+| ![Pixel Peaks](web/img/pixelpeaks.png) | ![Turbo Horizon](web/img/turbohorizon.png) | ![Gem Cascade](web/img/gemcascade.png) |
+| **Pixel Peaks**, a platformer starring a little judoka | **Turbo Horizon**, a pseudo-3D road racer | **Gem Cascade**, a match-three puzzle |
+| ![City Shield](web/img/cityshield.png) | | |
+| **City Shield**, missile defence | | |
 
 Every game has three difficulty levels. Choose Easy, Normal or Hard on its title screen with up/down. Slower is easier, and each difficulty keeps its own hi-score.
 

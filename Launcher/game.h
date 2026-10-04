@@ -182,7 +182,10 @@ static void scanGames() {
                             {"HOP RUSH", "Cross the road, ride the river", "out/hr_play.ppm"},
                             {"VOLT RALLY", "Paddle tennis against six rivals", "out/vr_play.ppm"},
                             {"MAZE MUNCH", "Clear the maze, outrun the wisps", "out/mm_play.ppm"},
-                            {"PIXEL PEAKS", "A little judoka climbs three mountain worlds", "out/pp_w1a.ppm"}};
+                            {"PIXEL PEAKS", "A little judoka climbs three mountain worlds", "out/pp_w1a.ppm"},
+                            {"TURBO HORIZON", "Race the clock down a sunset highway", "out/th_s1a.ppm"},
+                            {"GEM CASCADE", "Swap gems, chain cascades, set off novas", "out/gc_special.ppm"},
+                            {"CITY SHIELD", "Intercept the warheads, save the cities", "out/cs_play.ppm"}};
   ngames = sizeof(names) / sizeof(names[0]);
   for (int i = 0; i < ngames; i++) {
     memset(&games[i], 0, sizeof(Game));
