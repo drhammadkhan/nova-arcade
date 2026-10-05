@@ -48,7 +48,8 @@ Sprites are `struct Sprite { w, h, const uint8_t* px }`. The easiest way to make
 
 ## Sound
 
-- `audio::play(SFX_x, param)` plays one of the shared sound effects: shoot, hit, explode, power-up, line clear, bounce, brick, march, UFO and more.
+- `audio::play(SFX_x, param)` plays one of the shared sound effects: shoot, hit, explode, power-up, line clear, bounce, brick, march, UFO, jump, coin, gem match, missile launch, tyre skid and more.
+- `audio::engine(hz, vol)` runs a continuous engine drone for driving games (set `vol` to 0 to stop it).
 - `audio::music(n)` plays song `n` from your `Music` table. Songs are bars of `{chord, lead pattern, drum pattern}`. Lead patterns are 16 steps of MIDI notes, where 0 is a rest and 1 holds the previous note. See any game's music block for an example.
 
 ## Input
